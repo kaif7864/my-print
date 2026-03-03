@@ -13,6 +13,7 @@ import NotforYou from "./services/marksheets/MarksheetSelection";
         // App.js mein imports check karein
 import MarksheetSelection from "./services/marksheets/MarksheetSelection";
 import MarksheetForm from "./services/marksheets/MarksheetForm"; // Isko import karein
+import AadhaarExtractor from "./services/aadhar"; // Isko import karein
 
 // 🔥 Protected Route Wrapper Component
 const ProtectedRoute = ({ children, isAuthenticated }) => {
@@ -74,6 +75,9 @@ function App() {
         <Route path="/coming-soon" element={<ProtectedRoute isAuthenticated={isAuthenticated}><ComingSoonPage /></ProtectedRoute>} />
         <Route path="/not-for-you" element={<ProtectedRoute isAuthenticated={isAuthenticated}><NotforYou /></ProtectedRoute>} />
         <Route path="/generate-marksheet" element={<ProtectedRoute isAuthenticated={isAuthenticated}><NotforYou /></ProtectedRoute>} />
+        <Route path="/marksheet-selection" element={<ProtectedRoute isAuthenticated={isAuthenticated}><MarksheetSelection /></ProtectedRoute>} />
+        <Route path="/generate-marksheet/:type" element={<ProtectedRoute isAuthenticated={isAuthenticated}><MarksheetForm /></ProtectedRoute>} />
+        <Route path="/aadhar" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AadhaarExtractor /></ProtectedRoute>} /> 
 
 
 

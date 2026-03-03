@@ -81,7 +81,7 @@ export default function Dashboard() {
       title: "Aadhaar Card",
       description: "Convert Aadhaar PDF into a printable Smart ID.",
       icon: <FiFileText className="text-blue-500 w-7 h-7" />,
-      path: "/coming-soon",
+      path: "/aadhar",
       color: "border-blue-100 bg-blue-50"
     },
     {
