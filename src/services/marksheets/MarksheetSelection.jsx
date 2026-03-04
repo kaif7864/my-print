@@ -6,12 +6,40 @@ import ProtectedService from '../../components/ProtectedService';
 
 
 const marksheets = [
-    { id: 'Old_2nd', title: 'Old_Second', year: '2002', cost: 65, color: 'bg-blue-500' },
-    { id: 'intermediate', title: '12th Class (Intermediate)', board: 'UP Board / CBSE', cost: 20, color: 'bg-indigo-500' },
-    { id: 'graduation', title: 'Graduation Degree', board: 'University', cost: 50, color: 'bg-purple-500' },
-    { id: 'diploma', title: 'Diploma Certificate', board: 'Technical Board', cost: 30, color: 'bg-orange-500' },
-    { id: 'iti', title: 'ITI Marksheet', board: 'NCVT', cost: 25, color: 'bg-red-500' },
-    { id: 'custom', title: 'Custom Marksheet', board: 'Generic Template', cost: 15, color: 'bg-teal-500' },
+    { 
+        id: 'Old_2nd', 
+        title: 'Old_Second', 
+        year: '2002', 
+        cost: 65, 
+        color: 'bg-blue-500', 
+        path: '/old-2nd' // 👈 Alag URL
+    },
+    { 
+        id: 'intermediate', 
+        title: '12th Class (Intermediate)', 
+        board: 'UP Board / CBSE', 
+        cost: 20, 
+        color: 'bg-indigo-500', 
+        path: '/coming-soon' // 👈 Alag URL
+    },
+    { 
+        id: 'graduation', 
+        title: 'Graduation Degree', 
+        board: 'University', 
+        cost: 50, 
+        color: 'bg-purple-500', 
+        path: '/coming-soon' // 👈 Alag URL
+    },
+
+      { 
+        id: 'graduation', 
+        title: 'Graduation Degree', 
+        board: 'University', 
+        cost: 50, 
+        color: 'bg-purple-500', 
+        path: '/coming-soon' 
+    },
+    // ... baaki items mein bhi 'path' add karein
 ];
 
 function MarksheetSelection() {
@@ -53,36 +81,33 @@ function MarksheetSelection() {
                 {/* Cards Grid */}
                 <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredSheets.map((sheet) => (
-                        <div 
-                            key={sheet.id}
-                            onClick={() => navigate(`/generate-marksheet/${sheet.id}`)}
-                            className="group bg-white rounded-3xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden"
-                        >
-                            {/* Accent Color Strip */}
-                            <div className={`absolute top-0 left-0 w-2 h-full ${sheet.color}`}></div>
+    <div 
+        key={sheet.id}
+        onClick={() => navigate(sheet.path)} // 🚀 Sidha path par bhejega (No IDs)
+        className="group bg-white rounded-3xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden"
+    >
+        {/* Accent Color Strip */}
+        <div className={`absolute top-0 left-0 w-2 h-full ${sheet.color}`}></div>
 
-                            <div className="flex justify-between items-start mb-4">
-                                <div className={`p-3 rounded-2xl ${sheet.color.replace('bg-', 'bg-opacity-10 ')} ${sheet.color.replace('bg-', 'text-')}`}>
-                                    <FiFileText size={24} />
-                                </div>
-                                <span className="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full">
-                                    ₹{sheet.cost}
-                                </span>
-                            </div>
+        <div className="flex justify-between items-start mb-4">
+            <div className={`p-3 rounded-2xl ${sheet.color.replace('bg-', 'bg-opacity-10 ')} ${sheet.color.replace('bg-', 'text-')}`}>
+                <FiFileText size={24} />
+            </div>
+            <span className="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full">
+                ₹{sheet.cost}
+            </span>
+        </div>
 
-                            <h3 className="text-xl font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
-                                {sheet.title}
-                            </h3>
-                            <p className="text-gray-500 text-sm mt-1 mb-6">{sheet.board}</p>
+        <h3 className="text-xl font-bold text-gray-800 group-hover:text-indigo-600">
+            {sheet.title}
+        </h3>
+        <p className="text-gray-500 text-sm mt-1 mb-6">{sheet.board || "Report Card"}</p>
 
-                            <div className="flex items-center text-indigo-600 font-semibold text-sm">
-                                Proceed to Generate <FiArrowRight className="ml-2 group-hover:translate-x-2 transition-transform" />
-                            </div>
-
-                            {/* Background Decoration */}
-                            <FiFileText className="absolute -bottom-4 -right-4 text-gray-50 opacity-10 group-hover:opacity-20 transition-opacity" size={120} />
-                        </div>
-                    ))}
+        <div className="flex items-center text-indigo-600 font-semibold text-sm">
+            Proceed to Generate <FiArrowRight className="ml-2 group-hover:translate-x-2 transition-transform" />
+        </div>
+    </div>
+))}
                 </div>
 
                 {/* No Results State */}

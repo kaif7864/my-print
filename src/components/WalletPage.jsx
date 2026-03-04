@@ -12,15 +12,13 @@ export default function WalletPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const email = localStorage.getItem("userEmail"); // 🔥 Saved email
+        const email = localStorage.getItem("userEmail");
         if (!email) return;
 
-        // Fetch Balance
         const balanceResponse = await fetch(`http://localhost:5000/api/wallet/balance?email=${email}`);
         const balanceData = await balanceResponse.json();
         if (balanceResponse.ok) setBalance(balanceData.balance);
 
-        // Fetch Transactions
         const txnsResponse = await fetch(`http://localhost:5000/api/wallet/transactions?email=${email}`);
         const txnsData = await txnsResponse.json();
         if (txnsResponse.ok) setTransactions(txnsData);
@@ -31,7 +29,6 @@ export default function WalletPage() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -52,7 +49,7 @@ export default function WalletPage() {
           </Link>
         </header>
 
-        {/* Balance Card - ✨ Loading state added */}
+        {/* Balance Card */}
         <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-3xl p-8 text-white shadow-lg shadow-indigo-200 mb-10">
           <div className="flex justify-between items-start">
             <div>
@@ -70,7 +67,7 @@ export default function WalletPage() {
           </div>
         </div>
 
-        {/* Transaction History - ✨ Dynamic data added */}
+        {/* Transaction History */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center gap-4 flex-wrap">
             <h3 className="text-lg font-bold text-gray-800">Transaction History</h3>
@@ -81,47 +78,63 @@ export default function WalletPage() {
               <input
                 type="text"
                 placeholder="Search transactions..."
-                className="border border-gray-200 rounded-xl py-2 pl-9 pr-4 w-full md:w-64 text-sm focus:ring-2 focus:ring-indigo-200"
+                className="border border-gray-200 rounded-xl py-2 pl-9 pr-4 w-full md:w-64 text-sm focus:ring-2 focus:ring-indigo-200 outline-none"
               />
             </div>
           </div>
           
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left font-semibold text-gray-600">ID</th>
-                <th className="px-6 py-4 text-left font-semibold text-gray-600">Type</th>
-                <th className="px-6 py-4 text-left font-semibold text-gray-600">Date</th>
-                <th className="px-6 py-4 text-right font-semibold text-gray-600">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {loading ? (
-                <tr><td colSpan="4" className="text-center py-10">Loading...</td></tr>
-              ) : transactions.length === 0 ? (
-                <tr><td colSpan="4" className="text-center py-10 text-gray-500">No transactions yet.</td></tr>
-              ) : transactions.map((txn) => (
-                <tr key={txn._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-gray-700 font-medium">{txn._id.slice(-6)}</td>
-                  <td className="px-6 py-4 flex items-center gap-2">
-                    {txn.amount > 0 ? 
-                      <FiArrowDownLeft className="text-emerald-500" /> : 
-                      <FiArrowUpRight className="text-red-500" />
-                    }
-                    <span className="text-gray-700">{txn.type}</span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-500">
-                    {new Date(txn.date).toLocaleString()}
-                  </td>
-                  <td className={`px-6 py-4 text-right font-bold ${txn.amount > 0 ? "text-emerald-600" : "text-gray-900"}`}>
-                    {txn.amount > 0 ? "+" : ""}₹ {Math.abs(txn.amount).toFixed(2)}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600">ID</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600">Type</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600">Date</th>
+                  <th className="px-6 py-4 text-right font-semibold text-gray-600">Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {loading ? (
+                  <tr><td colSpan="4" className="text-center py-10">Loading...</td></tr>
+                ) : transactions.length === 0 ? (
+                  <tr><td colSpan="4" className="text-center py-10 text-gray-500">No transactions yet.</td></tr>
+                ) : transactions.map((txn) => {
+                  const isCredit = txn.amount > 0;
+                  return (
+                    <tr key={txn._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-gray-700 font-medium">#{txn._id.slice(-6).toUpperCase()}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {isCredit ? (
+                            <div className="bg-emerald-100 p-2 rounded-lg">
+                              <FiArrowDownLeft className="text-emerald-600" size={16} />
+                            </div>
+                          ) : (
+                            <div className="bg-red-100 p-2 rounded-lg">
+                              <FiArrowUpRight className="text-red-600" size={16} />
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-gray-800 font-semibold block">{txn.type}</span>
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">{isCredit ? "Wallet Topup" : "Service Payment"}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">
+                        <div className="font-medium text-gray-700">{new Date(txn.date).toLocaleDateString()}</div>
+                        <div className="text-xs text-gray-400">{new Date(txn.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                      </td>
+                      <td className={`px-6 py-4 text-right font-bold text-base ${isCredit ? "text-emerald-600" : "text-red-600"}`}>
+                        {isCredit ? "+" : "-"} ₹{Math.abs(txn.amount).toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </main>
     </div>
   );
-} 
+}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiMail, FiLock, FiLoader } from "react-icons/fi";
+import { FiMail, FiLock, FiLoader, FiEye, FiEyeOff } from "react-icons/fi";
 
 // ✨ App.js se 'onLogin' prop aana chahiye taaki login status update ho sake
 export default function LoginPage({ onLogin }) {
@@ -8,6 +8,7 @@ export default function LoginPage({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -16,11 +17,10 @@ export default function LoginPage({ onLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Purana error clear karein
+    setError("");
     setLoading(true);
 
     try {
-      // 📡 Backend API Call
       const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -30,26 +30,30 @@ export default function LoginPage({ onLogin }) {
       const data = await response.json();
 
       if (response.ok) {
-        // ✅ SUCCESS: Token aur login status save karein
+        // ✅ 1. Sabhi important data save karein
         localStorage.setItem("userEmail", data.user.email);
-        localStorage.setItem("token", data.token); // Agar backend se token aa raha hai
+        localStorage.setItem("token", data.token); 
         localStorage.setItem("isLoggedIn", "true");
-        // localStorage.setItem("token", data.token);
-        
-        onLogin(); // 🚀 App.js ki state update karein
-        navigate("/"); // Dashboard par bhej dein
+
+        // ✅ 2. Expiry Timestamp calculate karein (Abhi se 2 ghante baad)
+        const twoHoursInMs = 2 * 60 * 60 * 1000;
+        const expiryTime = new Date().getTime() + twoHoursInMs;
+        localStorage.setItem("session_expiry", expiryTime);
+
+        onLogin();
+        navigate("/");
       } else {
-        // ❌ ERROR: Backend se aaya error message dikhayein
         setError(data.message || "Invalid credentials");
       }
     } catch (err) {
-      // 🌐 Network error
       setError("Server not responding. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
+
+  
   return (
     <div className="min-h-screen bg-[#f3f4f6] flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 w-full max-w-md">
@@ -87,22 +91,32 @@ export default function LoginPage({ onLogin }) {
 
           {/* Password Field */}
           <div>
-            <label className="text-sm font-medium text-gray-700">Password</label>
-            <div className="relative mt-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                <FiLock />
-              </span>
-              <input
-                type="password"
-                name="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-200 rounded-xl py-3 pl-10 pr-4 focus:ring-2 focus:ring-indigo-200 outline-none"
-              />
-            </div>
-          </div>
+  <label className="text-sm font-medium text-gray-700">Password</label>
+  <div className="relative mt-1">
+    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+      <FiLock />
+    </span>
+    
+    <input
+      type={showPassword ? "text" : "password"} // ✨ Toggle logic
+      name="password"
+      placeholder="••••••••"
+      value={formData.password}
+      onChange={handleChange}
+      required
+      className="w-full border border-gray-200 rounded-xl py-3 pl-10 pr-12 focus:ring-2 focus:ring-indigo-200 outline-none"
+    />
+
+    {/* ✨ Eye Button */}
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-indigo-600 transition"
+    >
+      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+    </button>
+  </div>
+</div>
 
           <div className="flex justify-end">
             <Link to="/forgot-password" className="text-sm text-indigo-600 hover:underline">

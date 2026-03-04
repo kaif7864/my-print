@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiFileText, FiCreditCard, FiTruck, FiArrowRight, FiList, FiBookOpen, FiCalendar, FiLogOut, FiLoader } from "react-icons/fi";
+import { FiFileText, FiCreditCard, FiTruck, FiArrowRight, FiList, FiBookOpen, FiCalendar, FiLogOut, FiLoader, FiDownload } from "react-icons/fi";
 import { LuWallet } from "react-icons/lu";
 import Sidebar from "../components/Sidebar";
 import ComingSoonPage from "../components/ComingSoonPage";
@@ -10,43 +10,46 @@ import NotforYou from "../services/marksheets/MarksheetForm";
 export default function Dashboard() {
   const navigate = useNavigate();
   const [statsData, setStatsData] = useState({ userToday: 0, systemTotal: 0 });
+  const [recentPrints, setRecentPrints] = useState([]); // ✨ New state for history
   const [loading, setLoading] = useState(true);
   
-  // ✨ User state for real name and avatar
   const [user, setUser] = useState({
       name: "User",
       avatar: "https://api.dicebear.com/8.x/adventurer/svg?seed=default"
   });
 
-  // ✨ API se Stats fetch karein
   useEffect(() => {
-    // A. Real User Data set karein
     const storedName = localStorage.getItem("userName");
     const storedAvatar = localStorage.getItem("userAvatar");
+    const userEmail = localStorage.getItem("userEmail");
+
     if(storedName) setUser(prev => ({...prev, name: storedName}));
     if(storedAvatar) setUser(prev => ({...prev, avatar: storedAvatar}));
 
-    // B. Stats Fetch Logic
-    const fetchStats = async () => {
+    const fetchDashboardData = async () => {
       try {
-        // ✨ User ka email localStorage se lein
-        const userEmail = localStorage.getItem("userEmail");                
-        const response = await fetch(`http://localhost:5000/api/stats?email=${userEmail}`);
-        const data = await response.json();
-        
-        if (response.ok) {
-          setStatsData(data);
+        // 1. Fetch Stats
+        const statsRes = await fetch(`http://localhost:5000/api/stats?email=${userEmail}`);
+        const stats = await statsRes.json();
+        if (statsRes.ok) setStatsData(stats);
+
+        // 2. Fetch Recent Prints (History)
+        const printsRes = await fetch(`http://localhost:5000/api/prints?email=${userEmail}`);
+        const prints = await printsRes.json();
+        if (printsRes.ok) {
+          // Sirf top 3 records lein
+          setRecentPrints(prints.slice(0, 3));
         }
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        console.error("Error fetching dashboard data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStats();
+    if(userEmail) fetchDashboardData();
   }, []);
-
+  
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("token");
@@ -178,11 +181,58 @@ export default function Dashboard() {
               <h3 className="font-bold text-gray-800">Recent Activity</h3>
               <Link to="/print-list" className="text-sm text-indigo-600 font-medium hover:underline">View All</Link>
             </div>
-            <div className="p-10 text-center">
-              <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-                  <FiList size={28} />
-              </div>
-              <p className="text-gray-500 text-sm">No recent IDs generated yet.</p>
+            
+            <div className="overflow-x-auto">
+              {recentPrints.length > 0 ? (
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                    <tr>
+                      <th className="px-6 py-3 font-medium">Name / ID</th>
+                      <th className="px-6 py-3 font-medium">Type</th>
+                      <th className="px-6 py-3 font-medium">Date</th>
+                      <th className="px-6 py-3 font-medium text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {recentPrints.map((print, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50 transition">
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-gray-800 text-sm">{print.name}</p>
+                          <p className="text-xs text-gray-400">{print.id_number}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${
+                            print.type === 'AADHAAR' ? 'bg-blue-100 text-blue-600' : 
+                            print.type === 'PAN' ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'
+                          }`}>
+                            {print.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {new Date(print.date).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <a 
+                            href={print.file_url} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-bold text-sm"
+                          >
+                            <FiDownload /> Download
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="p-10 text-center">
+                  <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                    <FiList size={28} />
+                  </div>
+                  <p className="text-gray-500 text-sm">No recent IDs generated yet.</p>
+                </div>
+              )}
             </div>
           </section>
         </div>

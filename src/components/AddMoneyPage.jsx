@@ -1,82 +1,85 @@
 import React, { useState, useEffect } from "react";
 import { FiArrowLeft, FiCreditCard } from "react-icons/fi";
-import { Link, useNavigate } from "react-router-dom"; // ✨ useNavigate add kiya
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios"; // Axios use karna clean rehta hai
 import Sidebar from "./Sidebar";
-import { load } from "@cashfreepayments/cashfree-js";
 
 export default function AddMoneyPage() {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
-  const [cashfree, setCashfree] = useState(null); // ✨ SDK instance state
-  const navigate = useNavigate(); // ✨ Navigation ke liye
-  const predefinedAmounts = [50, 100, 200, 500];
+  const navigate = useNavigate();
+  const predefinedAmounts = [50.00, 100.00, 200.00, 500.00];
 
-  // ✨ SDK ko initialize karein jab page load ho
+  // Razorpay script load karne ke liye
   useEffect(() => {
-    const initializeSDK = async function () {
-      const cf = await load({ mode: "sandbox" }); // Production mein "production" karein
-      setCashfree(cf);
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
     };
-    initializeSDK();
   }, []);
 
   const handleRecharge = async (e) => {
     e.preventDefault();
+    
     if (!amount || amount <= 0) {
       alert("Please enter a valid amount");
       return;
     }
-    if (!cashfree) {
-      alert("Payment SDK not loaded yet. Please wait.");
+
+    const userEmail = localStorage.getItem("userEmail");
+    if (!userEmail) {
+      alert("User not logged in");
       return;
     }
 
     setLoading(true);
 
     try {
-      const userEmail = localStorage.getItem("userEmail");
-      if (!userEmail) {
-        alert("User not logged in");
-        setLoading(false);
-        return;
-      }
-
-      // 1. Backend se Order Session ID lein
-      const response = await fetch("http://localhost:5000/api/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: parseFloat(amount),
-          email: userEmail,
-        }),
+      // 1. Backend se Order Create karein
+      const orderRes = await axios.post("http://127.0.0.1:5000/api/create-order", {
+        email: userEmail,
+        amount: parseFloat(amount),
       });
 
-      const orderData = await response.json();
+      const { id: order_id, currency } = orderRes.data;
 
-      if (orderData.payment_session_id) {
-        // 2. Checkout setup karein
-        let checkoutOptions = {
-          paymentSessionId: orderData.payment_session_id,
-          // ✨ Return URL ko confirm karein ki ye sahi page par redirect ho
-          returnUrl: "http://localhost:5173/wallet", 
-        };
-        
-        // 3. Payment popup open karein
-        cashfree.checkout(checkoutOptions).then(function (result) {
-          if (result.error) {
-            alert("Payment failed: " + result.error.message);
-          } else {
-            // Payment initiate ho gayi, ab webhook ka wait karein
-            alert("Payment Processing...");
-            navigate("/wallet"); // ✨ Wallet page par bhej dein
+      // 2. Razorpay Options Setup
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // ⚠️ Apni Key yahan daalein
+        amount: amount * 100, // Razorpay paise mein leta hai
+        currency: currency,
+        name: "SmartID Pro Wallet",
+        description: "Add Money to Wallet",
+        order_id: order_id,
+        handler: async (response) => {
+          // 3. Payment Verify karein backend par
+          try {
+            await axios.post("http://127.0.0.1:5000/api/verify-payment", {
+              ...response,
+              email: userEmail,
+              amount: amount,
+            });
+            alert("Wallet updated successfully!");
+            navigate("/wallet");
+          } catch (e) {
+            alert("Payment verification failed!");
           }
-        });
-      } else {
-        alert("Failed to create order: " + (orderData.error || "Unknown error"));
-      }
+        },
+        prefill: {
+          email: userEmail,
+        },
+        theme: { color: "#4f46e5" },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
     } catch (error) {
       console.error("Payment error:", error);
-      alert("Something went wrong");
+      alert(error.response?.data?.error || "Failed to initiate payment");
     } finally {
       setLoading(false);
     }
@@ -119,7 +122,7 @@ export default function AddMoneyPage() {
 
             <button
               type="submit"
-              disabled={loading || !cashfree}
+              disabled={loading}
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-semibold transition flex items-center justify-center gap-2 text-lg disabled:bg-gray-400"
             >
               {loading ? "Processing..." : <><FiCreditCard size={20} /> Pay ₹{amount || "0"}</>}

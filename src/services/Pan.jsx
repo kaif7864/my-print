@@ -30,6 +30,17 @@ export default function IDForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+
+const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
     if (file) {
@@ -73,94 +84,98 @@ export default function IDForm() {
   // ==========================================
   // ✨ 2. CASHFREE PAYMENT FLOW
   // ==========================================
-  const initiateCashfree = async () => {
-    const userEmail = localStorage.getItem("userEmail");
-    
-    // A. Backend se Order ID banayein
-    const orderResponse = await axios.post("http://localhost:5000/api/create-order", {
-      email: userEmail,
-      amount: 10.0 // 💰 Yahan apni cost set karein
-    }).catch(error => {
-      console.error("Order Creation Error:", error.response.data);
-      throw new Error("Order creation failed: " + error.response.data.error);
-    });
+  const initiateRazorpay = async (orderData) => {
+    const res = await loadRazorpayScript();
 
-    const paymentSessionId = orderResponse.data.payment_session_id;
-
-    // B. Initialize Cashfree SDK
-    const cashfree = await load({
-      mode: "sandbox", // ⚠️ Live ke liye "production" karein
-    });
-
-    // C. Checkout Open Karein
-    let checkoutOptions = {
-      paymentSessionId: paymentSessionId,
-      redirectTarget: "_modal",
-    };
-
-    setShowPaymentModal(false); // Close Modal
-    return cashfree.checkout(checkoutOptions);
-  };
-
-  // ==========================================
-  // ✨ 3. MAIN SUBMIT FLOW
-  // ==========================================
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!photo || !sign) {
-      alert("Photo and Signature required");
+    if (!res) {
+      alert("Razorpay SDK failed to load. Are you online?");
       return;
     }
-    
-    const userEmail = localStorage.getItem("userEmail");
-    if (!userEmail) {
-        alert("Please login first");
-        return;
-    }
 
-    // ✨ Modal dikhayein pehle
+    return new Promise((resolve, reject) => {
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY, 
+        amount: orderData.amount,
+        currency: orderData.currency || "INR",
+        name: "smartID Pro",
+        description: `Payment for ${serviceType.toUpperCase()}`,
+        order_id: orderData.id,
+        handler: function (response) {
+          resolve(response); // Payment Success: returns payment_id, order_id, signature
+        },
+        prefill: {
+          email: localStorage.getItem("userEmail"),
+        },
+        theme: { color: "#4f46e5" },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+            reject(new Error("Payment cancelled by user"));
+          },
+        },
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!photo || !sign) return alert("Photo and Signature required");
+    setLoading(true);
     await checkBalance();
+    setLoading(false);
     setShowPaymentModal(true);
   };
+
+    // ✨ Modal dikhayein pehle
+ 
 
   // ==========================================
   // ✨ 4. FINAL GENERATION (After Payment)
   // ==========================================
-  const generateID = async (paymentMethod) => {
+const generateID = async (paymentMethod) => {
     const userEmail = localStorage.getItem("userEmail");
-    
+    let razorpayResponse = null;
+
+    setLoading(true);
+    setShowPaymentModal(false);
+    setMessage({ type: "info", text: "Initializing..." });
+
     try {
-        setLoading(true);
-        setShowPaymentModal(false);
-        setMessage({ type: "info", text: `Processing payment via ${paymentMethod}...` });
+      if (paymentMethod === "razorpay") {
+        // Step A: Create Order on Backend
+        const orderRes = await axios.post("http://localhost:5000/api/create-order", {
+          email: userEmail,
+          amount: 15.00 // Rupees
+        });
+        
+        // Step B: Open Razorpay Checkout
+        razorpayResponse = await initiateRazorpay(orderRes.data);
+      }
 
-        // A. Handle Payment Method
-        if (paymentMethod === "cf") {
-            const paymentResult = await initiateCashfree();
-            if (paymentResult.error) {
-                throw new Error("Payment Failed or Cancelled");
-            }
-        } else {
-            // Wallet Deduction Logic - Backend update karega
-            setMessage({ type: "info", text: "Deducting from wallet..." });
-        }
+      setMessage({ type: "info", text: "Processing. Please wait..." });
 
-        // B. Generate ID
-        setMessage({ type: "info", text: "Payment Successful! Generating ID..." });
+      // Step C: Send all data to backend for PDF generation
+      const data = new FormData();
+      Object.keys(formData).forEach((key) => data.append(key, formData[key]));
+      data.append("photo", photo);
+      data.append("sign", sign);
+      data.append("service_type", serviceType);
+      data.append("email", userEmail);
+      data.append("payment_method", paymentMethod);
+      
+      if (razorpayResponse) {
+        data.append("razorpay_payment_id", razorpayResponse.razorpay_payment_id);
+        data.append("razorpay_order_id", razorpayResponse.razorpay_order_id);
+        data.append("razorpay_signature", razorpayResponse.razorpay_signature);
+      }
 
-        const data = new FormData();
-        Object.keys(formData).forEach((key) => data.append(key, formData[key]));
-        data.append("photo", photo);
-        data.append("sign", sign);
-        data.append("service_type", serviceType);
-        data.append("email", userEmail);
-        data.append("payment_method", paymentMethod); // 🛡️ Tell backend
-
-        const response = await axios.post(
-            "http://localhost:5000/generate-pan",
-            data,
-            { responseType: "blob" }
-        );
+      const response = await axios.post(
+        "http://localhost:5000/generate-pan",
+        data,
+        { responseType: "blob" }
+      );
 
         // Download logic
         const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -242,12 +257,12 @@ export default function IDForm() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
             <h3 className="text-xl font-bold mb-4">Select Payment Method</h3>
-            <p className="text-gray-600 mb-6 text-sm">Amount to pay: **Rs. 10.0**</p>
+            <p className="text-gray-600 mb-6 text-sm">Amount to pay: **Rs. 15.00**</p>
             
             <div className="space-y-4">
               <button 
                 onClick={() => generateID("wallet")}
-                disabled={walletBalance < 10.0}
+                disabled={walletBalance < 15.00}
                 className="w-full flex items-center justify-between gap-3 p-4 border rounded-xl hover:border-indigo-300 disabled:opacity-50"
               >
                 <div className="flex items-center gap-3">
@@ -258,11 +273,11 @@ export default function IDForm() {
               </button>
 
               <button 
-                onClick={() => generateID("cf")}
+                onClick={() => generateID("razorpay")}
                 className="w-full flex items-center gap-3 p-4 border rounded-xl hover:border-indigo-300"
               >
                 <FiCreditCard className="text-green-600" size={24} />
-                <span className="font-semibold">Pay by Cashfree (UPI/Card)</span>
+                <span className="font-semibold">Pay by(UPI/Card)</span>
               </button>
             </div>
             
