@@ -17,6 +17,7 @@ function MarksheetForm() {
     const [walletBalance, setWalletBalance] = useState(0);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
+    const API_BASE_URL = import.meta.env.VITE_API_URL; // Backend URL (adjust if needed)
 
     // 1. Razorpay SDK Loader
     const loadRazorpayScript = () => {
@@ -37,7 +38,7 @@ function MarksheetForm() {
     const checkBalance = async () => {
         const userEmail = localStorage.getItem("userEmail");
         try {
-            const response = await axios.get(`http://localhost:5000/api/wallet/balance?email=${userEmail}`);
+            const response = await axios.get(`${API_BASE_URL}/api/wallet/balance?email=${userEmail}`);
             setWalletBalance(response.data.balance);
         } catch (error) {
             console.error("Error fetching balance", error);
@@ -98,7 +99,7 @@ function MarksheetForm() {
 
             if (paymentMethod === "razorpay") {
                 // Backend se order create karwayein
-                const orderResponse = await axios.post("http://localhost:5000/api/create-order", {
+                const orderResponse = await axios.post(`${API_BASE_URL}/api/create-order`, {
                     email: userEmail,
                     amount: 65.00 // 💰 Cost
                 });
@@ -123,7 +124,7 @@ function MarksheetForm() {
             }
 
             const response = await axios.post(
-                "http://localhost:5000/generate-marksheet",
+                `${API_BASE_URL}/generate-marksheet`,
                 dataToSubmit,
                 { responseType: "blob" }
             );

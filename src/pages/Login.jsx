@@ -11,73 +11,76 @@ export default function LoginPage({ onLogin }) {
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
-
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
+  
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (error) setError(""); // Jab user type kare toh error hata dein
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
 
-    try {
-      const response = await fetch('http://localhost:5000/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-      const data = await response.json();
+  try {
+    // 1. Login Endpoint ka use karein (Not /api/stats)
+    const response = await fetch(`${API_BASE_URL}/api/user/login`, { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
 
-      if (response.ok) {
-        // ✅ 1. Sabhi important data save karein
-        localStorage.setItem("userEmail", data.user.email);
-        localStorage.setItem("token", data.token); 
-        localStorage.setItem("isLoggedIn", "true");
+    const data = await response.json();
 
-        // ✅ 2. Expiry Timestamp calculate karein (Abhi se 2 ghante baad)
-        const twoHoursInMs = 2 * 60 * 60 * 1000;
-        const expiryTime = new Date().getTime() + twoHoursInMs;
-        localStorage.setItem("session_expiry", expiryTime);
-        
-        confetti({
+    if (response.ok) {
+      // ✅ Session Data save karein
+      localStorage.setItem("userEmail", data.user.email);
+      localStorage.setItem("token", data.token); 
+      localStorage.setItem("isLoggedIn", "true");
+
+      // ✅ Expiry (2 hours)
+      const twoHoursInMs = 2 * 60 * 60 * 1000;
+      const expiryTime = new Date().getTime() + twoHoursInMs;
+      localStorage.setItem("session_expiry", expiryTime);
+      
+      // ✨ Confetti Effect
+      confetti({
         particleCount: 150,
         spread: 70,
         origin: { y: 0.6 },
         colors: ['#4f46e5', '#10b981', '#f59e0b']
-    });
+      });
 
-    // 3. Welcome Pop-up
-    Swal.fire({
+      // 🏆 Success Pop-up
+      Swal.fire({
         title: `Welcome Back, ${data.user.name || 'User'}!`,
         text: 'Aapka SmartID Pro dashboard ready hai.',
         icon: 'success',
-        timer: 3000, // 3 second baad apne aap band ho jayega
+        timer: 2000,
         showConfirmButton: false,
         timerProgressBar: true,
         background: '#fff',
-        borderRadius: '20px',
         customClass: {
             title: 'text-gray-900 font-bold',
             popup: 'rounded-3xl'
         }
-    }).then(() => {
-        onLogin();
-        navigate("/");
-    });
-}
-       else {
-        setError(data.message || "Invalid credentials");
-      }
-    } catch (err) {
-      setError("Server not responding. Please try again later.");
-    } finally {
-      setLoading(false);
+      }).then(() => {
+        onLogin(); // App.js ka state update karein
+        navigate("/"); // Dashboard par bhejein
+      });
+    } else {
+      // Backend se aaya error message dikhayein
+      setError(data.message || "Invalid credentials");
     }
-  };
-
+  } catch (err) {
+    console.error("Login Error:", err);
+    setError("Server not responding. Please try again later.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   
   return (

@@ -30,7 +30,7 @@ useEffect(() => {
 }, []);
 
 
-
+ const API_BASE_URL = import.meta.env.VITE_API_URL; // Backend URL (adjust if needed)
 
   useEffect(() => {
   const userEmail = localStorage.getItem("userEmail");
@@ -39,9 +39,9 @@ useEffect(() => {
     try {
       // 1. Fetch Stats & User Profile Parallelly
       const [statsRes, profileRes, printsRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/stats?email=${userEmail}`),
-        fetch(`http://localhost:5000/api/user/profile?email=${userEmail}`), // ✨ Profile fetch
-        fetch(`http://localhost:5000/api/prints?email=${userEmail}`)
+        fetch(`${API_BASE_URL}/api/stats?email=${userEmail}`),
+        fetch(`${API_BASE_URL}/api/user/profile?email=${userEmail}`),
+        fetch(`${API_BASE_URL}/api/prints?email=${userEmail}`)
       ]);
 
       const stats = await statsRes.json();

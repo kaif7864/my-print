@@ -8,6 +8,7 @@ export default function WalletPage() {
   const [balance, setBalance] = useState(0.00);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const API_BASE_URL = import.meta.env.VITE_API_URL; // Backend URL (adjust if needed)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -15,11 +16,11 @@ export default function WalletPage() {
         const email = localStorage.getItem("userEmail");
         if (!email) return;
 
-        const balanceResponse = await fetch(`http://localhost:5000/api/wallet/balance?email=${email}`);
+        const balanceResponse = await fetch(`${API_BASE_URL}/api/wallet/balance?email=${email}`);
         const balanceData = await balanceResponse.json();
         if (balanceResponse.ok) setBalance(balanceData.balance);
 
-        const txnsResponse = await fetch(`http://localhost:5000/api/wallet/transactions?email=${email}`);
+        const txnsResponse = await fetch(`${API_BASE_URL}/api/wallet/transactions?email=${email}`);
         const txnsData = await txnsResponse.json();
         if (txnsResponse.ok) setTransactions(txnsData);
 

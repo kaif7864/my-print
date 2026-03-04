@@ -58,7 +58,7 @@ function App() {
     checkAuth();
 
     // Check every 30 seconds for better accuracy
-    const interval = setInterval(checkAuth, 30000); 
+    const interval = setInterval(checkAuth, 30000);
 
     return () => clearInterval(interval);
   }, [handleLogout]);
@@ -71,15 +71,15 @@ function App() {
         <Route path="/signup" element={<Signup />} />
 
         {/* --- Protected Routes --- */}
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <Dashboard onLogout={handleLogout} />
             </ProtectedRoute>
-          } 
+          }
         />
-        
+
         <Route
           path="/generate/:serviceType"
           element={
@@ -88,44 +88,44 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
-        <Route 
-          path="/profile" 
-          element={<ProtectedRoute isAuthenticated={isAuthenticated}><Profile /></ProtectedRoute>} 
+
+        <Route
+          path="/profile"
+          element={<ProtectedRoute isAuthenticated={isAuthenticated}><Profile /></ProtectedRoute>}
         />
-        <Route 
-          path="/print-list" 
-          element={<ProtectedRoute isAuthenticated={isAuthenticated}><PrintListPage /></ProtectedRoute>} 
+        <Route
+          path="/print-list"
+          element={<ProtectedRoute isAuthenticated={isAuthenticated}><PrintListPage /></ProtectedRoute>}
         />
-        <Route 
-          path="/wallet" 
-          element={<ProtectedRoute isAuthenticated={isAuthenticated}><WalletPage /></ProtectedRoute>} 
+        <Route
+          path="/wallet"
+          element={<ProtectedRoute isAuthenticated={isAuthenticated}><WalletPage /></ProtectedRoute>}
         />
-        <Route 
-          path="/add-money" 
-          element={<ProtectedRoute isAuthenticated={isAuthenticated}><AddMoneyPage /></ProtectedRoute>} 
+        <Route
+          path="/add-money"
+          element={<ProtectedRoute isAuthenticated={isAuthenticated}><AddMoneyPage /></ProtectedRoute>}
         />
-        <Route 
-          path="/coming-soon" 
-          element={<ProtectedRoute isAuthenticated={isAuthenticated}><ComingSoonPage /></ProtectedRoute>} 
+        <Route
+          path="/coming-soon"
+          element={<ProtectedRoute isAuthenticated={isAuthenticated}><ComingSoonPage /></ProtectedRoute>}
         />
-        <Route 
-          path="/not-for-you" 
-          element={<ProtectedRoute isAuthenticated={isAuthenticated}><NotforYou /></ProtectedRoute>} 
+        <Route
+          path="/not-for-you"
+          element={<ProtectedRoute isAuthenticated={isAuthenticated}><NotforYou /></ProtectedRoute>}
         />
-      
-        <Route 
-          path="/marksheet-selection" 
-          element={<ProtectedRoute isAuthenticated={isAuthenticated}><MarksheetSelection /></ProtectedRoute>} 
+
+        <Route
+          path="/marksheet-selection"
+          element={<ProtectedRoute isAuthenticated={isAuthenticated}><MarksheetSelection /></ProtectedRoute>}
         />
-       
-        <Route 
-          path="/aadhar" 
-          element={<ProtectedRoute isAuthenticated={isAuthenticated}><AadhaarExtractor /></ProtectedRoute>} 
-        /> 
-        <Route 
-          path="/old-2nd" 
-          element={<ProtectedRoute isAuthenticated={isAuthenticated}><MarksheetForm /></ProtectedRoute>} 
+
+        <Route
+          path="/aadhar"
+          element={<ProtectedRoute isAuthenticated={isAuthenticated}><AadhaarExtractor /></ProtectedRoute>}
+        />
+        <Route
+          path="/old-2nd"
+          element={<ProtectedRoute isAuthenticated={isAuthenticated}><MarksheetForm /></ProtectedRoute>}
         />
 
         {/* --- 404 handler --- */}

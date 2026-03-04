@@ -7,7 +7,7 @@ export default function Sidebar() {
   const location = useLocation();
   const [balance, setBalance] = useState("0.00"); // ✨ State for balance
   const [loading, setLoading] = useState(true);
-
+  const API_BASE_URL = import.meta.env.VITE_API_URL; // Backend URL (adjust if needed)
   // ✨ API se balance fetch karein
   useEffect(() => {
     const fetchBalance = async () => {
@@ -15,7 +15,7 @@ export default function Sidebar() {
         // 🔥 Testing ke liye temporary email hardcode kiya hai.
         // Production me token se user id nikalni chahiye.
         const email = localStorage.getItem("userEmail");
-        const response = await fetch(`http://localhost:5000/api/wallet/balance?email=${email}`);
+        const response = await fetch(`${API_BASE_URL}/api/wallet/balance?email=${email}`);
         const data = await response.json();
         
         if (response.ok) {

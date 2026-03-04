@@ -2,7 +2,7 @@
 
 import axios from "axios";
 
-const API_BASE = "http://127.0.0.1:5000"; // change if needed
+const API_BASE = import.meta.env.VITE_API_URL; // change if needed
 
 export const generateAadhaar = async (data, paymentMethod) => {
   try {

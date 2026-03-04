@@ -6,14 +6,14 @@ export default function PrintListPage() {
   const [printList, setPrintList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-
+  const API_BASE_URL = import.meta.env.VITE_API_URL; // Backend URL (adjust if needed)
   // ✨ Real Data Fetching
   useEffect(() => {
     const fetchPrints = async () => {
       try {
         // LocalStorage se logged-in user ki email nikalna best rahega
         const userEmail = localStorage.getItem("userEmail") || "test@example.com"; 
-        const response = await fetch(`http://localhost:5000/api/prints?email=${userEmail}`);
+        const response = await fetch(`${API_BASE_URL}/api/prints?email=${userEmail}`);
         const data = await response.json();
         
         if (response.ok) {

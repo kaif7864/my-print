@@ -16,6 +16,7 @@ export default function AadhaarExtractor() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const API_BASE_URL = import.meta.env.VITE_API_URL; // Backend URL (adjust if needed)
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -41,7 +42,7 @@ export default function AadhaarExtractor() {
 
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/extract-aadhaar", {
+      const response = await fetch(`${API_BASE_URL}/extract-aadhaar`, {
         method: "POST",
         body: formData,
       });
@@ -64,7 +65,7 @@ export default function AadhaarExtractor() {
   const checkBalance = async () => {
     const userEmail = localStorage.getItem("userEmail"); // Ya context se lein
     try {
-        const response = await axios.get(`http://localhost:5000/api/wallet/balance?email=${userEmail}`);
+        const response = await axios.get(`${API_BASE_URL}/api/wallet/balance?email=${userEmail}`);
         setWalletBalance(response.data.balance);
     } catch (error) {
         console.error("Error fetching balance", error);
@@ -78,7 +79,7 @@ export default function AadhaarExtractor() {
     const userEmail = localStorage.getItem("userEmail");
     
     // A. Backend se Order ID banayein
-    const orderResponse = await axios.post("http://localhost:5000/api/create-order", {
+    const orderResponse = await axios.post(`${API_BASE_URL}/api/create-order`, {
       email: userEmail,
       amount: 50.0 // 💰 Aadhaar generation cost
     }).catch(error => {
@@ -163,7 +164,7 @@ export default function AadhaarExtractor() {
         }
 
         const response = await axios.post(
-            "http://localhost:5000/generate-aadhaar",
+            `${API_BASE_URL}/generate-aadhaar`,
             formData,
             { responseType: "blob" } // 📥 PDF download ke liye important
         );

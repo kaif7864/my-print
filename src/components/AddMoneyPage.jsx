@@ -9,7 +9,7 @@ export default function AddMoneyPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const predefinedAmounts = [50.00, 100.00, 200.00, 500.00];
-
+  const API_BASE_URL = import.meta.env.VITE_API_URL; // Backend URL (adjust if needed)
   // Razorpay script load karne ke liye
   useEffect(() => {
     const script = document.createElement("script");
@@ -57,7 +57,7 @@ export default function AddMoneyPage() {
         handler: async (response) => {
           // 3. Payment Verify karein backend par
           try {
-            await axios.post("http://127.0.0.1:5000/api/verify-payment", {
+            await axios.post(`${API_BASE_URL}/api/verify-payment`, {
               ...response,
               email: userEmail,
               amount: amount,

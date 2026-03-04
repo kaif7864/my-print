@@ -9,7 +9,7 @@ export default function SignupPage() {
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const API_BASE_URL = import.meta.env.VITE_API_URL; // Backend URL (adjust if needed)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -36,7 +36,7 @@ export default function SignupPage() {
 
     try {
       // 2. API Call to Flask Backend (MongoDB Atlas connection)
-      const response = await fetch('http://localhost:5000/api/signup', {
+      const response = await fetch(`${API_BASE_URL}/api/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

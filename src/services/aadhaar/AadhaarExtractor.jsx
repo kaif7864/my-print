@@ -11,6 +11,7 @@ const AadhaarExtractor = () => {
     const [rawText, setRawText] = useState("");
     const [paymentMethod, setPaymentMethod] = useState("wallet");
     const [userEmail, setUserEmail] = useState("");
+    const API_BASE_URL = import.meta.env.VITE_API_URL; // Backend URL (adjust if needed)
 
     useEffect(() => {
         const storedEmail = localStorage.getItem("userEmail") || "user@example.com";
@@ -95,7 +96,7 @@ const AadhaarExtractor = () => {
         }
 
         const response = await axios.post(
-            "http://127.0.0.1:5000/generate-aadhaar",
+            `${API_BASE_URL}/generate-aadhaar`,
             formData,
             {
                 headers: { "Content-Type": "multipart/form-data" },
@@ -119,7 +120,7 @@ const AadhaarExtractor = () => {
 
         if (paymentMethod === "razorpay") {
             // Step 1: Create Order on Backend
-            const orderRes = await axios.post("http://127.0.0.1:5000/api/create-order", {
+            const orderRes = await axios.post(`${API_BASE_URL}/api/create-order`, {
                 email: userEmail,
                 amount: amount
             });
@@ -137,7 +138,7 @@ const AadhaarExtractor = () => {
                 handler: async (response) => {
                     // Step 3: Verify & Generate after payment success
                     try {
-                        const verifyRes = await axios.post("http://127.0.0.1:5000/api/verify-payment", {
+                        const verifyRes = await axios.post(`${API_BASE_URL}/api/verify-payment`, {
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
