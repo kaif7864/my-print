@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiMail, FiLock, FiLoader, FiEye, FiEyeOff } from "react-icons/fi";
+import Swal from 'sweetalert2';
+import confetti from 'canvas-confetti';
 
 // ✨ App.js se 'onLogin' prop aana chahiye taaki login status update ho sake
 export default function LoginPage({ onLogin }) {
@@ -39,10 +41,34 @@ export default function LoginPage({ onLogin }) {
         const twoHoursInMs = 2 * 60 * 60 * 1000;
         const expiryTime = new Date().getTime() + twoHoursInMs;
         localStorage.setItem("session_expiry", expiryTime);
+        
+        confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#4f46e5', '#10b981', '#f59e0b']
+    });
 
+    // 3. Welcome Pop-up
+    Swal.fire({
+        title: `Welcome Back, ${data.user.name || 'User'}!`,
+        text: 'Aapka SmartID Pro dashboard ready hai.',
+        icon: 'success',
+        timer: 3000, // 3 second baad apne aap band ho jayega
+        showConfirmButton: false,
+        timerProgressBar: true,
+        background: '#fff',
+        borderRadius: '20px',
+        customClass: {
+            title: 'text-gray-900 font-bold',
+            popup: 'rounded-3xl'
+        }
+    }).then(() => {
         onLogin();
         navigate("/");
-      } else {
+    });
+}
+       else {
         setError(data.message || "Invalid credentials");
       }
     } catch (err) {
@@ -116,8 +142,7 @@ export default function LoginPage({ onLogin }) {
       {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
     </button>
   </div>
-</div>
-
+</div>  
           <div className="flex justify-end">
             <Link to="/forgot-password" className="text-sm text-indigo-600 hover:underline">
               Forgot Password?

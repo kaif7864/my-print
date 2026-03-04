@@ -17,22 +17,34 @@ export default function ProfilePage() {
 
   // ✨ LOCAL STORAGE SE DATA FETCH KAREIN
   useEffect(() => {
-    // Man lein ki signup ke waqt aapne localStorage mein data save kiya hai
-    const storedName = localStorage.getItem("userName") || "User";
-    const storedEmail = localStorage.getItem("userEmail") || "user@example.com";
-    const storedPhone = localStorage.getItem("userPhone") || "Not Provided";
-    const storedAvatar = localStorage.getItem("userAvatar") || profileData.avatar;
+  const userEmail = localStorage.getItem("userEmail"); // Email base query ke liye chahiye
 
-    const realData = {
-        name: storedName,
-        email: storedEmail,
-        phone: storedPhone,
-        avatar: storedAvatar,
-    };
+  const fetchProfileFromDB = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/user/profile?email=${userEmail}`);
+      const data = await response.json();
 
-    setProfileData(realData);
-    setTempData(realData);
-  }, []);
+      if (response.ok) {
+        // DB se aaya hua real data state mein set karein
+        const dbData = {
+          name: data.name || "No Name",
+          email: data.email,
+          phone: data.phone || "Not Provided",
+          avatar: data.avatar || "https://api.dicebear.com/8.x/adventurer/svg?seed=default",
+        };
+        setProfileData(dbData);
+        setTempData(dbData);
+      }
+    } catch (error) {
+      console.error("DB Fetch Error:", error);
+    }
+  };
+
+  if (userEmail) {
+    fetchProfileFromDB();
+  }
+}, []);
+
 
   const handleChange = (e) => {
     setTempData({ ...tempData, [e.target.name]: e.target.value });
@@ -49,18 +61,40 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    setProfileData(tempData); // Update state
+const handleSave = async (e) => {
+  e.preventDefault();
 
-    // ✨ LOCAL STORAGE UPDATE KAREIN
-    localStorage.setItem("userName", tempData.name);
-    localStorage.setItem("userPhone", tempData.phone);
-    localStorage.setItem("userAvatar", tempData.avatar);
-    
-    setIsEditing(false);
-    alert("Profile Updated Successfully!");
-  };
+  try {
+    const response = await fetch('http://localhost:5000/api/user/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: tempData.email, // Identity ke liye email zaroori hai
+        name: tempData.name,
+        phone: tempData.phone,
+        avatar: tempData.avatar
+      })
+    });
+
+    if (response.ok) {
+      // ✅ 1. State update karein
+      setProfileData(tempData);
+
+      // ✅ 2. Local Storage update karein (taaki dashboard pe bina refresh dikhe)
+      localStorage.setItem("userName", tempData.name);
+      localStorage.setItem("userPhone", tempData.phone);
+      localStorage.setItem("userAvatar", tempData.avatar);
+
+      setIsEditing(false);
+      alert("🎉 Database & Profile Updated Successfully!");
+    } else {
+      alert("Failed to update profile in Database.");
+    }
+  } catch (error) {
+    console.error("Update Error:", error);
+    alert("Server error. Please try again.");
+  }
+};
 
   const handleCancel = () => {
     setTempData(profileData); // Revert changes

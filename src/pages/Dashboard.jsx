@@ -8,6 +8,7 @@ import { GiFirstAidKit } from "react-icons/gi";
 import NotforYou from "../services/marksheets/MarksheetForm";
 
 export default function Dashboard() {
+  const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
   const [statsData, setStatsData] = useState({ userToday: 0, systemTotal: 0 });
   const [recentPrints, setRecentPrints] = useState([]); // ✨ New state for history
@@ -18,38 +19,60 @@ export default function Dashboard() {
       avatar: "https://api.dicebear.com/8.x/adventurer/svg?seed=default"
   });
 
+useEffect(() => {
+    const hasShown = sessionStorage.getItem("welcomeShown");
+    if (!hasShown) {
+        setShowWelcome(true);
+        sessionStorage.setItem("welcomeShown", "true");
+        // 5 second baad gayab ho jaye
+        setTimeout(() => setShowWelcome(false), 5000);
+    }
+}, []);
+
+
+
+
   useEffect(() => {
-    const storedName = localStorage.getItem("userName");
-    const storedAvatar = localStorage.getItem("userAvatar");
-    const userEmail = localStorage.getItem("userEmail");
+  const userEmail = localStorage.getItem("userEmail");
 
-    if(storedName) setUser(prev => ({...prev, name: storedName}));
-    if(storedAvatar) setUser(prev => ({...prev, avatar: storedAvatar}));
+  const fetchDashboardData = async () => {
+    try {
+      // 1. Fetch Stats & User Profile Parallelly
+      const [statsRes, profileRes, printsRes] = await Promise.all([
+        fetch(`http://localhost:5000/api/stats?email=${userEmail}`),
+        fetch(`http://localhost:5000/api/user/profile?email=${userEmail}`), // ✨ Profile fetch
+        fetch(`http://localhost:5000/api/prints?email=${userEmail}`)
+      ]);
 
-    const fetchDashboardData = async () => {
-      try {
-        // 1. Fetch Stats
-        const statsRes = await fetch(`http://localhost:5000/api/stats?email=${userEmail}`);
-        const stats = await statsRes.json();
-        if (statsRes.ok) setStatsData(stats);
+      const stats = await statsRes.json();
+      const profile = await profileRes.json();
+      const prints = await printsRes.json();
 
-        // 2. Fetch Recent Prints (History)
-        const printsRes = await fetch(`http://localhost:5000/api/prints?email=${userEmail}`);
-        const prints = await printsRes.json();
-        if (printsRes.ok) {
-          // Sirf top 3 records lein
-          setRecentPrints(prints.slice(0, 3));
-        }
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      } finally {
-        setLoading(false);
+      if (statsRes.ok) setStatsData(stats);
+      
+      if (profileRes.ok) {
+        setUser({
+          name: profile.name || "User",
+          avatar: profile.avatar || "https://api.dicebear.com/8.x/adventurer/svg?seed=default"
+        });
+        // Side benefit: LocalStorage ko bhi update kar dein taaki turant refresh pe gap na dikhe
+        localStorage.setItem("userName", profile.name);
       }
-    };
 
-    if(userEmail) fetchDashboardData();
-  }, []);
-  
+      if (printsRes.ok) {
+        setRecentPrints(prints.slice(0, 3));
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (userEmail) fetchDashboardData();
+}, []);
+
+
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("token");
@@ -109,6 +132,15 @@ export default function Dashboard() {
     color: "border-red-100 bg-red-50"
   },
   ];
+
+
+  {showWelcome && (
+    <div className="fixed top-10 left-1/2 transform -translate-x-1/2 z-50 bg-white shadow-2xl border-2 border-indigo-500 px-8 py-4 rounded-full flex items-center gap-3 animate-bounce">
+        <span className="text-2xl">🎉</span>
+        <h2 className="font-bold text-gray-800">Welcome Back, {user.name}!</h2>
+    </div>
+)}
+
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] flex">
