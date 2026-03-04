@@ -13,7 +13,7 @@ import NotforYou from "./services/marksheets/MarksheetSelection";
         // App.js mein imports check karein
 import MarksheetSelection from "./services/marksheets/MarksheetSelection";
 import MarksheetForm from "./services/marksheets/MarksheetForm"; // Isko import karein
-import AadhaarExtractor from "./services/aadhar"; // Isko import karein
+import AadhaarExtractor from "./services/aadhaar/AadhaarExtractor"; // Isko import karein
 
 // 🔥 Protected Route Wrapper Component
 const ProtectedRoute = ({ children, isAuthenticated }) => {
